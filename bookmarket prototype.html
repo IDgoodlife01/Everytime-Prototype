@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>중고책 마켓</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--red:#e54459;--red2:#c73348;--border:#e0e0e0;--text:#222;--sub:#777;--sidebar:200px;--header:54px}
+body{font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;background:#f0f0f0;color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:inherit}
+input,textarea,select{font-family:inherit}
+input:focus,textarea:focus,select:focus{outline:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+
+/* ── 헤더 ── */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header);background:var(--red);display:flex;align-items:center;padding:0 20px;z-index:200;gap:12px}
+.header-logo{font-size:20px;font-weight:800;color:#fff;width:var(--sidebar);flex-shrink:0}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.header-user{color:#fff;font-size:13px;opacity:.9}
+
+/* ── 사이드바 ── */
+.sidebar{position:fixed;top:var(--header);left:0;bottom:0;width:var(--sidebar);background:#fff;border-right:1px solid var(--border);overflow-y:auto;z-index:100}
+.sidebar-info{padding:16px;border-bottom:1px solid var(--border)}
+.sidebar-info h3{font-size:14px;font-weight:700}
+.sidebar-info p{font-size:12px;color:var(--sub);margin-top:2px}
+.nav-section{padding:8px 0}
+.nav-label{font-size:11px;color:#aaa;font-weight:600;padding:8px 16px 4px;letter-spacing:.5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:14px;color:var(--sub);transition:.12s;border-left:3px solid transparent}
+.nav-item:hover{background:#fafafa;color:var(--text)}
+.nav-item.active{color:var(--red);font-weight:600;background:#fff5f6;border-left-color:var(--red)}
+
+/* ── 메인 ── */
+.main{margin-left:var(--sidebar);margin-top:var(--header);padding:22px;min-height:calc(100vh - var(--header))}
+
+/* ── 공통 버튼 ── */
+.btn-red{background:var(--red);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:600;transition:.15s}
+.btn-red:hover{background:var(--red2)}
+.btn-outline{background:#fff;color:var(--red);border:1px solid var(--red);border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600;transition:.15s}
+.btn-outline:hover{background:#fff5f6}
+.btn-gray{background:#f5f5f5;color:var(--text);border:1px solid var(--border);border-radius:7px;padding:7px 14px;font-size:13px;transition:.15s}
+.btn-gray:hover{background:#eee}
+
+/* ── 모달 ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:26px;box-shadow:0 8px 40px rgba(0,0,0,.18);width:100%;max-height:90vh;overflow-y:auto}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-head h3{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;line-height:1}
+.modal-body{display:flex;flex-direction:column;gap:13px}
+.form-row{display:flex;flex-direction:column;gap:5px}
+.form-row label{font-size:12px;color:var(--sub);font-weight:600}
+.form-row input,.form-row textarea{border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;transition:.15s;width:100%}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--red)}
+.form-row textarea{resize:vertical;min-height:80px}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.img-upload-zone{border:2px dashed var(--border);border-radius:8px;height:130px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;position:relative;overflow:hidden;background:#fafafa;color:var(--sub);font-size:13px}
+.img-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.img-preview{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.cond-sel{display:flex;gap:7px}
+.cond-btn{padding:6px 13px;border:1px solid var(--border);border-radius:6px;font-size:13px;cursor:pointer;background:#fff;transition:.15s}
+.cond-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ── 책방 ── */
+.market-shell{display:flex;flex-direction:column;gap:13px}
+.market-top{display:flex;align-items:center;gap:10px}
+.market-top h2{font-size:17px;font-weight:700;flex:1}
+.market-filters{display:flex;gap:6px}
+.mf-chip{padding:5px 13px;border:1px solid var(--border);border-radius:14px;font-size:13px;cursor:pointer;color:var(--sub);background:#fff;transition:.15s}
+.mf-chip.on{background:var(--red);color:#fff;border-color:var(--red)}
+.market-pane{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.market-pane.no-detail{grid-template-columns:1fr}
+.book-table-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;align-self:start}
+.book-table{width:100%;border-collapse:collapse;font-size:13px}
+.book-table thead th{background:#fafafa;border-bottom:1px solid var(--border);padding:10px 14px;text-align:left;font-weight:600;color:var(--sub);white-space:nowrap}
+.book-table tbody tr{border-bottom:1px solid #f2f2f2;cursor:pointer;transition:background .1s}
+.book-table tbody tr:last-child{border-bottom:none}
+.book-table tbody tr:hover{background:#fafafa}
+.book-table tbody tr.sel{background:#fff5f6}
+.book-table td{padding:11px 14px;vertical-align:middle}
+.td-title{font-weight:600;max-width:220px}
+.td-title-wrap{display:flex;align-items:center;gap:8px}
+.td-thumb{width:32px;height:40px;border-radius:3px;object-fit:cover;flex-shrink:0;background:#f0f0f0;border:1px solid var(--border)}
+.td-thumb-ph{width:32px;height:40px;border-radius:3px;flex-shrink:0;background:#f5f5f5;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px}
+.td-title-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-author{color:var(--sub);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-price{font-weight:700;color:var(--red);white-space:nowrap}
+.td-seller{color:var(--sub);white-space:nowrap}
+.td-time{color:#bbb;white-space:nowrap;font-size:12px}
+.book-table-empty{padding:48px;text-align:center;color:#bbb;font-size:14px}
+.bc{display:inline-block;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.bc.s{background:#e3f2fd;color:#1565c0}
+.bc.a{background:#e8f5e9;color:#2e7d32}
+.bc.b{background:#fff8e1;color:#f57f17}
+.bc.c{background:#fce4ec;color:#c62828}
+.sold-b{display:inline-block;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;background:#eee;color:#999}
+.bdp{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;align-self:start;position:sticky;top:calc(var(--header) + 16px)}
+.bdp-head{padding:13px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bdp-head h3{font-size:14px;font-weight:700}
+.bdp-close{background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;line-height:1}
+.bdp-body{padding:15px;display:flex;flex-direction:column;gap:13px}
+.bdp-img{width:100%;height:170px;border-radius:8px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:48px;overflow:hidden}
+.bdp-img img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.bdp-title{font-size:15px;font-weight:700;line-height:1.4}
+.bdp-author{font-size:12px;color:var(--sub);margin-top:2px}
+.bdp-price-row{display:flex;align-items:baseline;gap:7px;margin-top:5px;flex-wrap:wrap}
+.bdp-price{font-size:20px;font-weight:700;color:var(--red)}
+.bdp-orig{font-size:12px;color:#aaa;text-decoration:line-through}
+.bdp-save{font-size:12px;color:var(--red);font-weight:600}
+.bdp-rows{display:flex;flex-direction:column;gap:7px;font-size:13px;border-top:1px solid var(--border);padding-top:11px}
+.bdp-row{display:flex;gap:9px}
+.bdp-lbl{width:48px;color:var(--sub);flex-shrink:0;font-size:12px}
+.bdp-val{flex:1;color:var(--text);word-break:break-all;font-size:13px}
+.bdp-actions{display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:11px}
+.bdp-actions button{flex:1;min-width:64px;font-size:12px;padding:7px 6px}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);background:#222;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">logo</div>
+  <div class="header-right">
+    <span class="header-user">사용자번호 / 학과 정보</span>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="sidebar-info">
+    <h3>우리 학교</h3>
+    <p>컴퓨터공학부</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">커뮤니티</div>
+    <div class="nav-item" onclick="alert('준비중')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>게시판
+    </div>
+    <div class="nav-item" onclick="alert('준비중')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>강의평가
+    </div>
+    <div class="nav-item active">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>중고책 마켓
+    </div>
+    <div class="nav-item" onclick="alert('준비중')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>쪽지
+    </div>
+    <div class="nav-item" onclick="alert('준비중')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>내 정보
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="marketView"></div>
+</div>
+
+<!-- 책 등록/수정 모달 -->
+<div class="modal-bg" id="bookModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h3 id="bookModalTitle">책 판매 등록</h3>
+      <button class="modal-close" onclick="closeModal('bookModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>책 사진</label>
+        <div class="img-upload-zone" id="bookImgZone">
+          <input type="file" id="bookImg" accept="image/*" onchange="previewBookImg(this)"/>
+          <span>📚 클릭하여 사진 추가</span>
+        </div>
+      </div>
+      <div class="form-row"><label>책 제목 *</label><input type="text" id="bTitle" placeholder="책 제목"/></div>
+      <div class="form-row"><label>저자/출판사 *</label><input type="text" id="bAuthor" placeholder="예) 홍길동 / 한빛미디어"/></div>
+      <div class="form-row-2">
+        <div class="form-row"><label>정가 (원) *</label><input type="number" id="bOrigPrice" placeholder="0" min="0"/></div>
+        <div class="form-row"><label>판매가 (원) *</label><input type="number" id="bPrice" placeholder="0" min="0"/></div>
+      </div>
+      <div class="form-row">
+        <label>상태</label>
+        <div class="cond-sel">
+          <button class="cond-btn on" data-c="S" onclick="setCond(this)">S (최상)</button>
+          <button class="cond-btn" data-c="A" onclick="setCond(this)">A (상)</button>
+          <button class="cond-btn" data-c="B" onclick="setCond(this)">B (중)</button>
+          <button class="cond-btn" data-c="C" onclick="setCond(this)">C (하)</button>
+        </div>
+      </div>
+      <div class="form-row"><label>설명</label><textarea id="bDesc" placeholder="책 상태, 필기 여부 등을 적어주세요"></textarea></div>
+    </div>
+    <div class="form-foot">
+      <button class="btn-gray" onclick="closeModal('bookModal')">취소</button>
+      <button class="btn-red" id="bookSubmitBtn" onclick="submitBook()">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 쪽지 모달 -->
+<div class="modal-bg" id="msgModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <h3>쪽지 보내기</h3>
+      <button class="modal-close" onclick="closeModal('msgModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>받는 사람</label><input type="text" id="msgTo" readonly style="background:#fafafa"/></div>
+      <div class="form-row"><label>내용</label><textarea id="msgContent" placeholder="내용을 입력하세요" style="min-height:110px"></textarea></div>
+    </div>
+    <div class="form-foot">
+      <button class="btn-gray" onclick="closeModal('msgModal')">취소</button>
+      <button class="btn-red" onclick="sendMsg()">보내기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS={
+  get:k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}},
+  set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))
+};
+
+let currentBookId=null,bookImgData=null,selectedCond="S",editingBookId=null,marketFilter="전체";
+const CC={S:"s",A:"a",B:"b",C:"c"};
+const CL={S:"S(최상)",A:"A(상)",B:"B(중)",C:"C(하)"};
+
+function getBooks(){return LS.get("bm_books")||initBooks()}
+function saveBooks(a){LS.set("bm_books",a)}
+
+function initBooks(){
+  const b=[
+    {id:"b1",title:"Introduction to Algorithms",author:"CLRS / MIT Press",price:25000,origPrice:48000,cond:"A",seller:"김민준",desc:"필기 거의 없음. 깨끗한 편.",img:null,sold:false,time:Date.now()-86400000},
+    {id:"b2",title:"컴퓨터 구조와 원리",author:"백종문 / 한빛아카데미",price:15000,origPrice:32000,cond:"S",seller:"이서연",desc:"새 책처럼 깨끗합니다.",img:null,sold:false,time:Date.now()-172800000},
+    {id:"b3",title:"운영체제",author:"Abraham Silberschatz / 퍼스트북",price:18000,origPrice:38000,cond:"B",seller:"박지호",desc:"필기 있음. 중요한 부분 마킹됨.",img:null,sold:false,time:Date.now()-259200000},
+    {id:"b4",title:"경제학원론",author:"맨큐 / 시그마프레스",price:22000,origPrice:45000,cond:"A",seller:"최유나",desc:"깨끗합니다. 연습문제집도 같이 팝니다.",img:null,sold:false,time:Date.now()-345600000},
+    {id:"b5",title:"데이터베이스 개론",author:"김연희 / 한빛아카데미",price:12000,origPrice:28000,cond:"C",seller:"정도현",desc:"형광펜 많음. 내용 파악엔 지장 없음.",img:null,sold:true,time:Date.now()-432000000},
+  ];
+  saveBooks(b);return b;
+}
+
+function renderMarket(){
+  let books=getBooks();
+  const all=books.length,avail=books.filter(b=>!b.sold).length;
+  if(marketFilter==="판매중") books=books.filter(b=>!b.sold);
+  else if(marketFilter==="판매완료") books=books.filter(b=>b.sold);
+  const sel=currentBookId?getBooks().find(b=>b.id===currentBookId):null;
+
+  document.getElementById("marketView").innerHTML=`
+<div class="market-shell">
+  <div class="market-top">
+    <h2>중고책 마켓 <span style="font-size:13px;font-weight:400;color:var(--sub)">${avail}권 판매중 · 총 ${all}권</span></h2>
+    <div class="market-filters">
+      ${["전체","판매중","판매완료"].map(f=>`<div class="mf-chip ${f===marketFilter?"on":""}" onclick="setFilter('${f}')">${f}</div>`).join("")}
+    </div>
+    <button class="btn-red" onclick="openBookModal()">+ 책 판매하기</button>
+  </div>
+  <div class="market-pane ${sel?"":"no-detail"}">
+    <div class="book-table-wrap">
+      <table class="book-table">
+        <thead><tr><th>책 제목</th><th>저자/출판사</th><th>상태</th><th>판매가</th><th>판매자</th><th>등록일</th></tr></thead>
+        <tbody>${books.length
+          ?books.map(b=>`
+          <tr onclick="viewBook('${b.id}')" class="${b.id===currentBookId?"sel":""}">
+            <td class="td-title"><div class="td-title-wrap">${b.img?`<img class="td-thumb" src="${b.img}">`:`<div class="td-thumb-ph">📚</div>`}<span class="td-title-text">${escH(b.title)}</span></div></td>
+            <td class="td-author">${escH(b.author)}</td>
+            <td>${b.sold?`<span class="sold-b">판매완료</span>`:`<span class="bc ${CC[b.cond]}">${CL[b.cond]}</span>`}</td>
+            <td class="td-price">${b.price.toLocaleString()}원</td>
+            <td class="td-seller">${escH(b.seller)}</td>
+            <td class="td-time">${timeAgo(b.time)}</td>
+          </tr>`).join("")
+          :`<tr><td colspan="6"><div class="book-table-empty">등록된 책이 없습니다</div></td></tr>`}
+        </tbody>
+      </table>
+    </div>
+    ${sel?detailPanel(sel):""}
+  </div>
+</div>`;
+}
+
+function detailPanel(b){
+  const pct=Math.round(((b.origPrice-b.price)/b.origPrice)*100);
+  return `<div class="bdp">
+  <div class="bdp-head"><h3>상세 정보</h3><button class="bdp-close" onclick="closeDetail()">×</button></div>
+  <div class="bdp-body">
+    <div class="bdp-img">${b.img?`<img src="${b.img}">`:"📚"}</div>
+    <div>
+      <div class="bdp-title">${escH(b.title)}</div>
+      <div class="bdp-author">${escH(b.author)}</div>
+      <div class="bdp-price-row">
+        <span class="bdp-price">${b.price.toLocaleString()}원</span>
+        <span class="bdp-orig">${b.origPrice.toLocaleString()}원</span>
+        ${!b.sold?`<span class="bdp-save">${pct}% 할인</span>`:`<span class="sold-b">판매완료</span>`}
+      </div>
+    </div>
+    <div class="bdp-rows">
+      <div class="bdp-row"><span class="bdp-lbl">상태</span><span class="bdp-val"><span class="bc ${CC[b.cond]}">${CL[b.cond]}</span></span></div>
+      <div class="bdp-row"><span class="bdp-lbl">판매자</span><span class="bdp-val">${escH(b.seller)}</span></div>
+      <div class="bdp-row"><span class="bdp-lbl">등록일</span><span class="bdp-val">${timeAgo(b.time)}</span></div>
+      ${b.desc?`<div class="bdp-row"><span class="bdp-lbl">설명</span><span class="bdp-val">${escH(b.desc)}</span></div>`:""}
+    </div>
+    <div class="bdp-actions">
+      ${!b.sold?`<button class="btn-red" style="flex:2" onclick="openMsgModal('${escH(b.seller)}')">✉ 쪽지 보내기</button>`:""}
+      <button class="btn-outline" onclick="openEditBook('${b.id}')">수정</button>
+      <button class="btn-gray" onclick="deleteBook('${b.id}')">삭제</button>
+      ${!b.sold?`<button class="btn-gray" style="flex:0 0 100%" onclick="markSold('${b.id}')">판매완료 처리</button>`:""}
+    </div>
+  </div>
+</div>`;
+}
+
+function setFilter(f){marketFilter=f;currentBookId=null;renderMarket()}
+function viewBook(id){currentBookId=(currentBookId===id?null:id);renderMarket()}
+function closeDetail(){currentBookId=null;renderMarket()}
+
+function markSold(id){
+  const books=getBooks();
+  books.find(b=>b.id===id).sold=true;
+  saveBooks(books);showToast("✅ 판매완료 처리되었습니다.");renderMarket();
+}
+
+function deleteBook(id){
+  if(!confirm("정말 삭제하시겠습니까?"))return;
+  saveBooks(getBooks().filter(b=>b.id!==id));
+  currentBookId=null;showToast("🗑 삭제되었습니다.");renderMarket();
+}
+
+function openBookModal(){
+  bookImgData=null;selectedCond="S";editingBookId=null;
+  document.querySelectorAll(".cond-btn").forEach(b=>b.classList.toggle("on",b.dataset.c==="S"));
+  ["bTitle","bAuthor","bDesc"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("bPrice").value="";
+  document.getElementById("bOrigPrice").value="";
+  document.getElementById("bookImgZone").innerHTML=
+    `<input type="file" id="bookImg" accept="image/*" onchange="previewBookImg(this)"><span>📚 클릭하여 사진 추가</span>`;
+  document.getElementById("bookModalTitle").textContent="책 판매 등록";
+  document.getElementById("bookSubmitBtn").textContent="등록";
+  openModal("bookModal");
+}
+
+function openEditBook(id){
+  const b=getBooks().find(x=>x.id===id);if(!b)return;
+  bookImgData=b.img||null;selectedCond=b.cond;editingBookId=id;
+  document.getElementById("bTitle").value=b.title;
+  document.getElementById("bAuthor").value=b.author;
+  document.getElementById("bPrice").value=b.price;
+  document.getElementById("bOrigPrice").value=b.origPrice;
+  document.getElementById("bDesc").value=b.desc||"";
+  document.querySelectorAll(".cond-btn").forEach(x=>x.classList.toggle("on",x.dataset.c===selectedCond));
+  document.getElementById("bookImgZone").innerHTML=bookImgData
+    ?`<img class="img-preview" src="${bookImgData}"><input type="file" id="bookImg" accept="image/*" onchange="previewBookImg(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer">`
+    :`<input type="file" id="bookImg" accept="image/*" onchange="previewBookImg(this)"><span>📚 클릭하여 사진 추가</span>`;
+  document.getElementById("bookModalTitle").textContent="책 수정";
+  document.getElementById("bookSubmitBtn").textContent="수정 저장";
+  openModal("bookModal");
+}
+
+function previewBookImg(input){
+  if(!input.files[0])return;
+  const r=new FileReader();
+  r.onload=e=>{
+    bookImgData=e.target.result;
+    document.getElementById("bookImgZone").innerHTML=
+      `<img class="img-preview" src="${bookImgData}"><input type="file" id="bookImg" accept="image/*" onchange="previewBookImg(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer">`;
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+function setCond(el){
+  selectedCond=el.dataset.c;
+  document.querySelectorAll(".cond-btn").forEach(b=>b.classList.toggle("on",b.dataset.c===selectedCond));
+}
+
+function submitBook(){
+  const title=document.getElementById("bTitle").value.trim();
+  const author=document.getElementById("bAuthor").value.trim();
+  const price=parseInt(document.getElementById("bPrice").value);
+  const origPrice=parseInt(document.getElementById("bOrigPrice").value);
+  if(!title||!author||!price||!origPrice){alert("필수 항목(*)을 모두 입력하세요.");return}
+  if(price>origPrice){alert("판매가가 정가보다 높습니다.");return}
+  const books=getBooks();
+  const desc=document.getElementById("bDesc").value.trim();
+  if(editingBookId){
+    const i=books.findIndex(b=>b.id===editingBookId);
+    if(i!==-1)books[i]={...books[i],title,author,price,origPrice,cond:selectedCond,desc,
+      img:bookImgData!==null?bookImgData:books[i].img};
+    showToast("✅ 수정되었습니다.");
+  }else{
+    books.unshift({id:Date.now().toString(),title,author,price,origPrice,
+      cond:selectedCond,seller:"나",desc,img:bookImgData,sold:false,time:Date.now()});
+    showToast("✅ 등록되었습니다.");
+  }
+  saveBooks(books);closeModal("bookModal");editingBookId=null;renderMarket();
+}
+
+function openMsgModal(seller){
+  document.getElementById("msgTo").value=seller;
+  document.getElementById("msgContent").value="";
+  openModal("msgModal");
+}
+function sendMsg(){
+  if(!document.getElementById("msgContent").value.trim()){alert("내용을 입력하세요.");return}
+  closeModal("msgModal");showToast("✉ 쪽지가 전송되었습니다.");
+}
+
+function openModal(id){document.getElementById(id).classList.add("open")}
+function closeModal(id){document.getElementById(id).classList.remove("open")}
+document.querySelectorAll(".modal-bg").forEach(m=>
+  m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
+
+function escH(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function timeAgo(t){
+  const d=Date.now()-t;
+  if(d<60000)return "방금 전";
+  if(d<3600000)return Math.floor(d/60000)+"분 전";
+  if(d<86400000)return Math.floor(d/3600000)+"시간 전";
+  if(d<604800000)return Math.floor(d/86400000)+"일 전";
+  return new Date(t).toLocaleDateString("ko-KR");
+}
+let _t=null;
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;clearTimeout(_t);
+  t.classList.add("show");
+  _t=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+renderMarket();
+</script>
+</body>
+</html>
